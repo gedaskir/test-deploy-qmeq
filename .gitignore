@@ -9,10 +9,11 @@
 # Python byte files *.pyc
 *.pyc
 
-# Text files *.txt
-*.txt
-
 # Specific files
+BUGS.txt
+FEATURES.txt
+REMOVE.txt
+TOKEN.txt
 docs/index.html.lnk
 docs/run.bat
 qmeq/pylintrc

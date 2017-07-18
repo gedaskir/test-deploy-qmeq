@@ -1,0 +1,43 @@
+notifications:
+  email: false
+
+branches:
+  only:
+    #- master
+    - 1.0
+
+matrix:
+  include:
+    - os: osx
+      sudo: required
+      language: generic
+    - os: linux
+      sudo: required
+      language: generic
+      services: docker
+      env: DOCKER_IMAGE=quay.io/pypa/manylinux1_x86_64
+    - os: linux
+      sudo: required
+      language: generic
+      services: docker
+      env: DOCKER_IMAGE=quay.io/pypa/manylinux1_i686
+           PRE_CMD=linux32
+
+install:
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then docker pull $DOCKER_IMAGE; fi
+
+script:
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then docker run --rm -v $PWD:/io $DOCKER_IMAGE $PRE_CMD /io/scripts/build-wheels-linux.sh; fi
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then scripts/build-wheels-macos.sh; fi
+  - ls dist/
+
+deploy:
+  provider: releases
+  api_key:
+    secure: Hz0JVy3M8Qt1DBsbNQHuUitNImF549ggrQa4xr0iq/hWd48Ij4UF5lFoCll0uCr1xveJGnGauOnZAGWfvLZuGneOfKySdmorMBFEo0YntT91t6Kj4rIF0PREF7B+7zChiBW0EAtYfRTW1DeeoJEe4IXIKt/xCvf6RMN8DL0yngdYHrImZ+2D8dveS2moYJ4527YFHfMyEJqcEUZVORxIIqR5EcVx2brmQSAwzVMitqmfNLPadBG2lQEwJjEJXEgKo2T0tF5koV0eORAQfXH+Z/AdufkpBFCMwNVI0Eo9hcHi4pFbsyehXV8Paz2YCdKZIRe4DpO71eUxh6C99rwYBjza51D7YwMVCIEVjt+IjlttrIEfOwZXJh47FVUY70Px4fLQIcla2ArbKV7xTlR66VkzxsT3rFd5fh6e3bgMdT1+oJRfvGoQPjb1IWDXPE3T7h/tfzUG0A2xzo21H8U0gMy+Lqd7aO3NlzVmpNaHPZ2IVHKqFqifL2C7b8vVoYABzGTcv+9A5LgoeeNHlUqT1i6nbdS3o/ezkG0QlLzWCOoLc/j/vbxvssJ0yDftjHcf6/5YtIEE89OBRo2Szk/NtrqPaUsS0hAULdTtTahd971X3N2YBoRiw2wXnFHQJtnzVqTE2/iPp2mHUKnVd+jp5i8V7NrhQpaHq/J5AwFFgfQ=
+  file_glob: true
+  file: dist/*.whl
+  skip_cleanup: true
+  on:
+    tags: true
+  overwrite: true
