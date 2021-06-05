@@ -4,7 +4,7 @@ notifications:
 branches:
   only:
     #- master
-    - 1.0
+    - 1.1
 
 matrix:
   include:
@@ -16,12 +16,6 @@ matrix:
       language: generic
       services: docker
       env: DOCKER_IMAGE=quay.io/pypa/manylinux1_x86_64
-    - os: linux
-      sudo: required
-      language: generic
-      services: docker
-      env: DOCKER_IMAGE=quay.io/pypa/manylinux1_i686
-           PRE_CMD=linux32
 
 install:
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then docker pull $DOCKER_IMAGE; fi
@@ -34,7 +28,7 @@ script:
 deploy:
   provider: releases
   api_key:
-    secure: Hz0JVy3M8Qt1DBsbNQHuUitNImF549ggrQa4xr0iq/hWd48Ij4UF5lFoCll0uCr1xveJGnGauOnZAGWfvLZuGneOfKySdmorMBFEo0YntT91t6Kj4rIF0PREF7B+7zChiBW0EAtYfRTW1DeeoJEe4IXIKt/xCvf6RMN8DL0yngdYHrImZ+2D8dveS2moYJ4527YFHfMyEJqcEUZVORxIIqR5EcVx2brmQSAwzVMitqmfNLPadBG2lQEwJjEJXEgKo2T0tF5koV0eORAQfXH+Z/AdufkpBFCMwNVI0Eo9hcHi4pFbsyehXV8Paz2YCdKZIRe4DpO71eUxh6C99rwYBjza51D7YwMVCIEVjt+IjlttrIEfOwZXJh47FVUY70Px4fLQIcla2ArbKV7xTlR66VkzxsT3rFd5fh6e3bgMdT1+oJRfvGoQPjb1IWDXPE3T7h/tfzUG0A2xzo21H8U0gMy+Lqd7aO3NlzVmpNaHPZ2IVHKqFqifL2C7b8vVoYABzGTcv+9A5LgoeeNHlUqT1i6nbdS3o/ezkG0QlLzWCOoLc/j/vbxvssJ0yDftjHcf6/5YtIEE89OBRo2Szk/NtrqPaUsS0hAULdTtTahd971X3N2YBoRiw2wXnFHQJtnzVqTE2/iPp2mHUKnVd+jp5i8V7NrhQpaHq/J5AwFFgfQ=
+    secure: qtLJf1SzA5nLwd0HOUUttcNecWo+YcECZduC4gYjto4Gp/IXFE9zvCakJeohveYSKJngwMjOPP3GuWdOU7v5o5wjaOVsb3dfgrjOBdb9Ftu5csd96mp0T1/fcPvt2QdldurAyiVSssT4zApbPqXLU5vESym2F0nCCsdeI4FARd2/VbvB/bqnRTPyblpNXMcs0wMC3SLBj3iVhAGnwHH1mlty6vfmgWViLhT8PHty3LHCGgTS023BskQlgx/BwUQdG2oCO2254T9WPxDoBaodfpwgK/yr2HZzwHaDAmgbccx8DgPHy3Bn1M2Cg6XmxR+rW/griPSZ1APzJcPxCNuJ0GNfxrswhV68b1Lbcds9de6SMuQgJ5TLDBmufCIoVZ4QDwXHdr0xrQe183GxJ9QhsuGwEJ0180D4OW+n88iISnUSZa6eE5zhzfSpxv38jZNdzujfYmNuqgXlszRzLJnZ7SjVvpU8LXUfm4rRHclKUa8HD7WWlf5BsZMSh8nYdCG7ahFwzQLc14X37da+WyQUKZ3abaxKoy10LRrrL/FwQJGPBxnsDmbklwMDgNHQL/1ViRdsisymxV9SbSFRrqz4VAzMw+mbCNnLbz8PHvSJ2QTGmPvhfWg2tUAGnlq1mb8KfMQIVizf4Wid16l6PFQkQD9M2FIcuNaBzGdp39PN8lg=
   file_glob: true
   file: dist/*.whl
   skip_cleanup: true

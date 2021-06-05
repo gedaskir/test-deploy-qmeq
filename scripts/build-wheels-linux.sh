@@ -2,7 +2,7 @@
 set -e -x
 
 # Different Python versions separated by space
-VERS=("cp27-cp27mu" "cp27-cp27m" "cp34-cp34m" "cp35-cp35m" "cp36-cp36m")
+VERS=("cp36-cp36m" "cp37-cp37m" "cp38-cp38m" "cp39-cp39m")
 
 # Compile wheels and put them into /io/mywheels/
 cd /io

@@ -2,14 +2,14 @@
 set -e -x
 
 # Different Python versions separated by space
-VERS=("2.7" "3.4" "3.5" "3.6")
+VERS=("3.6" "3.7" "3.8" "3.9")
 len=${#VERS[@]}
 
 # Links to different Python versions for MacOS
-URLS=("https://www.python.org/ftp/python/2.7.13/python-2.7.13-macosx10.6.pkg"
-      "https://www.python.org/ftp/python/3.4.4/python-3.4.4-macosx10.6.pkg"
-      "https://www.python.org/ftp/python/3.5.3/python-3.5.3-macosx10.6.pkg"
-      "https://www.python.org/ftp/python/3.6.1/python-3.6.1-macosx10.6.pkg")
+URLS=("https://www.python.org/ftp/python/3.6.8/python-3.6.8-macosx10.9.pkg",
+      "https://www.python.org/ftp/python/3.7.9/python-3.7.9-macosx10.9.pkg",
+      "https://www.python.org/ftp/python/3.8.10/python-3.8.10-macosx10.9.pkg",
+      "https://www.python.org/ftp/python/3.9.5/python-3.9.5-macosx10.9.pkg")
 
 PYPATH="/Library/Frameworks/Python.framework/Versions/"
 
