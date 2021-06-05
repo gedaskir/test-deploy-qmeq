@@ -3,8 +3,8 @@ notifications:
 
 branches:
   only:
-    #- master
-    - 1.1
+    - master
+    #- 1.1
 
 matrix:
   include:
