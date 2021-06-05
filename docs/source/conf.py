@@ -3,6 +3,7 @@ import sys
 import os
 
 sys.path.insert(0, os.path.abspath('../../qmeq/'))
+sys.path.insert(0, os.path.abspath('../..'))
 
 # -- General configuration ------------------------------------------------
 needs_sphinx = '1.3'
@@ -19,11 +20,11 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 project = u'qmeq'
-copyright = u'2016, Gediminas Kirsanskas'
+copyright = u'2019, Gediminas Kirsanskas'
 author = u'Gediminas Kirsanskas'
 
-version = u'1.0'
-release = u'1.0'
+version = u'1.1'
+release = u'1.1'
 
 language = None
 #today = ''

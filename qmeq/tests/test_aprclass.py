@@ -1,5 +1,7 @@
-from qmeq.aprclass import *
+from qmeq.approach.aprclass import *
+from qmeq.approach.base.neumann2 import *
 import qmeq
+
 
 def test_Approach2vN_kpnt():
     system = qmeq.Builder(nleads=1, dband={0: 1000}, kpnt=5, kerntype='2vN')
@@ -16,6 +18,7 @@ def test_Approach2vN_kpnt():
     system.kpnt = 6
     system.appr.make_Ek_grid()
     assert system.appr.Ek_grid.tolist() == [-1000, -600,  -200, 200, 600, 1000]
+
 
 def test_Approach2vN_make_Ek_grid():
     system = qmeq.Builder(nleads=2, dband={0: [-1000, 1000], 1: [-1000, 1000]}, kpnt=5, kerntype='2vN')

@@ -1,11 +1,11 @@
 Installation of QmeQ
 ====================
 
-For now QmeQ can be installed by building it from source. To be able to use and
-build QmeQ you need to have:
+QmeQ can be installed through [pip][pip] or by building it from source.
+To be able to use and build QmeQ you need to have:
 
-* [Python][Python] 2.7 or 3.3 with [setuptools][setuptools] installed,
-* [Cython][Cython] 0.22 and a C compiler compatible with it,
+* [Python][Python] 3 with [setuptools][setuptools] installed,
+* [Cython][Cython] and a C compiler compatible with it,
 * [NumPy][NumPy] package,
 * [SciPy][Scipy] package.
 
@@ -20,11 +20,16 @@ An easy way to obtain the above packages is by using Python package manager
 by using the following command
 
 ```bash
-$ pip install cython, numpy, scipy, matplotlib, jupyter
+$ pip install cython numpy scipy matplotlib jupyter
 ```
 
-QmeQ is installed by going into the [downloaded source][qmeqsrc] directory and
-running
+To install QmeQ through pip run
+
+```bash
+$ pip install qmeq
+```
+
+or by going into the [downloaded source][qmeqsrc] directory and running
 
 ```bash
 $ python setup.py install
@@ -40,22 +45,6 @@ For **Linux** and **Mac** we recommend to use the C compiler in the conventional
 **Visual Studio** or **Windows SDK C/C++** compiler can be used and more
 instructions how to setup these compilers to work with Cython are available
 [here][cext].
-
-The 32-bit gcc compiler can be used on Windows with 32-bit Python 2.7. This can
-be achieved by using the gcc compiler in [MinGW][mingw] suite by adding
-
-```
-[build]
-compiler = mingw32
-```
-
-to *'path to python'\Lib\distutils\distutils.cfg*. If the file does not exist
-then simply create it. We note that instead of using the actual [MinGW][mingw]
-it is possible to use Python package [Mingwpy], which can be obtained using
-
-```bash
-$ pip install -i https://pypi.anaconda.org/carlkl/simple mingwpy
-```
 
 NumPy and ATLAS/OpenBLAS/MKL
 ----------------------------
@@ -99,17 +88,17 @@ $ pytest tests
 Documentation
 -------------
 
-For now QmeQ contains just the [documentation][qmeqdocs] generated from
-docstrings in the source code. The QmeQ documentation can be generated in
+QmeQ contains the [documentation][qmeqdocs] generated from docstrings in the
+source code. This documentation can be generated in
 **html**, **latex**, and other formats using
 
-* [Sphinx][Sphinx] 1.3 package,
+* [Sphinx][Sphinx] package,
 * [sphinx-rtd-theme][srtdt] Read the Docs Sphinx theme.
 
 To install the above packages run
 
 ```bash
-$ pip install sphinx, sphinx-rtd-theme
+$ pip install sphinx sphinx-rtd-theme
 ```
 
 For example, to generate the documentation in **html** format run

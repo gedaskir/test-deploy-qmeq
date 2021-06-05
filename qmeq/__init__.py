@@ -34,19 +34,26 @@ duplicate existing calculations, check applicability of different methods, or
 simply discover new kind of physics using different approximate master equations.
 """
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
-from .aprclass import Approach
-from .aprclass import Approach2vN
-from .builder import Builder
-from .builder import FunctionProperties
+from .approach.aprclass import Approach
+from .approach.aprclass import ApproachElPh
+from .approach.aprclass import ApproachBase2vN
+from .builder.builder import Builder
+from .builder.builder_base import BuilderBase
+from .builder.builder_base import BuilderManyBody
+from .builder.builder_base import ModelParameters
+from .builder.builder_elph import BuilderElPh
+from .builder.builder_elph import BuilderManyBodyElPh
+from .builder.funcprop import FunctionProperties
 from .indexing import StateIndexing
 from .indexing import StateIndexingPauli
 from .indexing import StateIndexingDM
 from .indexing import StateIndexingDMc
 from .leadstun import LeadsTunneling
+from .baths import PhononBaths
 from .qdot import QuantumDot
 
-__version__ = '1.0'
+# Legacy class names
+from .builder.builder_base import BuilderManyBody as Builder_many_body
+from .builder.builder_elph import BuilderElPh as Builder_elph
+
+__version__ = '1.1'
