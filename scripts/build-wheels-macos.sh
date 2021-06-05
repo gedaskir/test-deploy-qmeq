@@ -15,3 +15,9 @@ echo "bin"
 ls /usr/bin/
 
 gcc --version
+
+/usr/local/bin/gcc-10 --version
+
+ln -sf /usr/local/bin/gcc-10 /usr/local/bin/gcc
+
+gcc --version
