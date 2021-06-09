@@ -28,6 +28,7 @@ class ApproachPyRTD(Approach):
         self.off_diag_corrections = self.funcp.off_diag_corrections
         self.ImGamma = False
         self.printed_warning_ImGamma = False
+        self.nsingle_warning_printed = False
 
     def get_kern_size(self):
         return self.si.npauli
@@ -231,9 +232,17 @@ class ApproachPyRTD(Approach):
             self.energy_current.fill(np.nan)
             self.heat_current.fill(np.nan)
             if not self.printed_warning_ImGamma:
-                print('Warning! Complex matrix elements detected, which are not supported ' +
+                print('Warning! Complex matrix elements detected, which are not supported for the RTD approach ' +
                       'when calculating the energy current.')
                 self.printed_warning_ImGamma = True
+
+        if self.si.nsingle == 0:
+            if not self.nsingle_warning_printed:
+                print('Warning! No single particle tunneling amplitudes (tleads) detected. Corrections to the energy ' +
+                      'current in the RTD approach uses tleads. Please specify BuilderManyBody.tleads_array and ' +
+                      'BuilderManyBody.nsingle, if possible.\n\nThe correction terms can be neglected if no single' +
+                      ' particle state is connected to more than one lead.')
+                self.nsingle_warning_printed = True
 
     def generate_fct(self):
         """
@@ -337,10 +346,13 @@ class ApproachPyRTD(Approach):
                     if lp == l: continue
                     for n1 in range(nsingle):
                         gamma += Tba[l, a, b] * Tba[lp, a, b].conj() * tleads[l, n1] * tleads[lp, n1].conj()
-                if abs(gamma.imag) > t_cutoff:
-                    self.ImGamma = True
                 temp = gamma.real * phi((dE - mu) / Tr, dlst[l, 0] / Tr, dlst[l, 1] / Tr)
                 temp += gamma.real * phi(-(dE - mu) / Tr, dlst[l, 0] / Tr, dlst[l, 1] / Tr)
+                if abs(gamma.imag) > t_cutoff:
+                    self.ImGamma = True
+                    #temp += gamma.imag * fermi_func((dE - mu) / Tr)*np.pi
+                    #temp += gamma.imag * fermi_func(-(dE - mu) / Tr) * np.pi
+
                 temp *= np.pi
                 kh.set_matrix_element_dd(l, temp, temp, bb, aa, 1)
 
@@ -353,10 +365,13 @@ class ApproachPyRTD(Approach):
                     if lp == l: continue
                     for n1 in range(nsingle):
                         gamma += Tba[l, b, c] * Tba[lp, b, c].conj() * tleads[l, n1] * tleads[lp, n1].conj()
-                if abs(gamma.imag) > t_cutoff:
-                    self.ImGamma = True
                 temp = gamma.real * phi((dE - mu) / Tr, dlst[l, 0] / Tr, dlst[l, 1] / Tr)
                 temp += gamma.real * phi(-(dE - mu) / Tr, dlst[l, 0] / Tr, dlst[l, 1] / Tr)
+                if abs(gamma.imag) > t_cutoff:
+                    self.ImGamma = True
+                    #temp += gamma.imag * fermi_func((dE - mu) / Tr) * np.pi
+                    #temp += gamma.imag * fermi_func(-(dE - mu) / Tr) * np.pi
+
                 temp *= np.pi
                 kh.set_matrix_element_dd(l, temp, temp, bb, cc, 1)
 
@@ -402,6 +417,10 @@ class ApproachPyRTD(Approach):
                         dE = E[b] - E[a]
                         temp += gamma.real * phi((dE - mu) / Tr, dlst[lp, 0] / Tr, dlst[lp, 1] / Tr)
                         temp += gamma.real * phi(-(dE - mu) / Tr, dlst[lp, 0] / Tr, dlst[lp, 1] / Tr)
+                        if abs(gamma.imag) > t_cutoff:
+                            self.ImGamma = True
+                            #temp += gamma.imag * fermi_func((dE - mu) / Tr) * np.pi
+                            #temp += gamma.imag * fermi_func(-(dE - mu) / Tr) * np.pi
                 temp *= np.pi
                 kh.set_matrix_element_dd(l, temp, temp, bb, aa, 2)
 
@@ -414,11 +433,13 @@ class ApproachPyRTD(Approach):
                         mu, Tr, gamma = mulst[lp], tlst[lp], 0.0
                         for n1 in range(nsingle):
                             gamma += Tba[l, b, c] * Tba[lp, b, c].conj() * tleads[l, n1] * tleads[lp, n1].conj()
-                        if abs(gamma.imag) > t_cutoff:
-                            self.ImGamma = True
                         dE = E[c] - E[b]
                         temp += gamma.real * phi((dE - mu) / Tr, dlst[lp, 0] / Tr, dlst[lp, 1] / Tr)
                         temp += gamma.real * phi(-(dE - mu) / Tr, dlst[lp, 0] / Tr, dlst[lp, 1] / Tr)
+                        if abs(gamma.imag) > t_cutoff:
+                            self.ImGamma = True
+                            #temp += gamma.imag * fermi_func((dE - mu) / Tr) * np.pi
+                            #temp += gamma.imag * fermi_func(-(dE - mu) / Tr) * np.pi
                 temp *= np.pi
                 kh.set_matrix_element_dd(l, temp, temp, bb, cc, 2)
 
@@ -479,7 +500,7 @@ class ApproachPyRTD(Approach):
             D = np.abs(dlst[r0, 1]) + np.abs(dlst[r0, 0])
             #N1 = (N0, N0 + 1), a1- = a0
             for a1p in statesdm[charge+1]:
-                t = Tba[r0, a0, a1p]
+                t = Tba[r0, a1p, a0]
                 if abs(t) == t_cutoff1:
                     continue
                 indx1 = self.si.get_ind_dm0(a1p, a1p, charge + 1)
@@ -489,15 +510,15 @@ class ApproachPyRTD(Approach):
                 #N2 = (N0, N0 + 2), a2m = a0
                 for a2p in statesdm[charge+2]:
                     #p2 = 1
-                    t1 = t * Tba[r1, a1p, a2p]
+                    t1 = t * Tba[r1, a2p, a1p]
                     if abs(t1) < t_cutoff2:
                         continue
                     E2 = E[a2p] - E[a0]
                     #3 = (N0, N0 + 1 ), a3- = a2-
                     for a3p in statesdm[charge+1]:
                         #charge4 = charge + 0, a4 = a0
-                        t2D = t1 * Tba[r1, a3p, a2p].conj() * Tba[r0, a0, a3p].conj()
-                        t2X = t1 * Tba[r0, a3p, a2p].conj() * Tba[r1, a0, a3p].conj()
+                        t2D = t1 * Tba[r1, a2p, a3p].conj() * Tba[r0, a3p, a0].conj()
+                        t2X = t1 * Tba[r0, a2p, a3p].conj() * Tba[r1, a3p, a0].conj()
                         E3 = E[a3p] - E[a0]
                         if abs(t2D) > t_cutoff3:
                             tempD = t2D * integralD(1, 1, E1, E2, E3, T1, T2, mu1, mu2, D, b_and_R, abs(t2D.imag)>t_cutoff3)
@@ -509,8 +530,8 @@ class ApproachPyRTD(Approach):
                     #N3 = ( N0 +1, N0 + 2)
                     for a3m in statesdm[charge+1]:
                         #charge4 = charge + 1, a4 = a3m
-                        t2D = t1 * Tba[r1, a0, a3m].conj() * Tba[r0, a3m, a2p].conj()
-                        t2X = t1 * Tba[r0, a0, a3m].conj() * Tba[r1, a3m, a2p].conj()
+                        t2D = t1 * Tba[r1, a3m, a0].conj() * Tba[r0, a2p, a3m].conj()
+                        t2X = t1 * Tba[r0, a3m, a0].conj() * Tba[r1, a2p, a3m].conj()
                         E3 = E[a2p] - E[a3m]
                         if abs(t2D) > t_cutoff3:
                             tempD = t2D * integralD(1, 1, E1, E2, E3, T1, T2, mu1, mu2, D, b_and_R, abs(t2D.imag)>t_cutoff3)
@@ -521,7 +542,7 @@ class ApproachPyRTD(Approach):
                 #p1 = -1
                 #N2 = ( N0 - 1, N0 + 1 ), a2+ = a1+
                 for a2m in statesdm[charge-1]:
-                    t1 = t * Tba[r1, a2m, a0]
+                    t1 = t * Tba[r1, a0, a2m]
                     if abs(t1) < t_cutoff2:
                         continue
                     E2 = E[a1p] - E[a2m]
@@ -529,8 +550,8 @@ class ApproachPyRTD(Approach):
                     #N3 = ( N0 - 1 , N0 ), a3- = a2-
                     for a3p in statesdm[charge]:
                         #charge4 = charge - 1, a0 = a2m
-                        t2D = t1 * Tba[r1, a3p, a1p].conj() * Tba[r0, a2m, a3p].conj()
-                        t2X = t1 * Tba[r0, a3p, a1p].conj() * Tba[r1, a2m, a3p].conj()
+                        t2D = t1 * Tba[r1, a1p, a3p].conj() * Tba[r0, a3p, a2m].conj()
+                        t2X = t1 * Tba[r0, a1p, a3p].conj() * Tba[r1, a3p, a2m].conj()
                         E3 = E[a3p] - E[a2m]
                         if abs(t2D) > t_cutoff3:
                             tempD = t2D * integralD(-1, 1, E1, E2, E3, T1, T2, mu1, mu2, D, b_and_R, abs(t2D.imag)>t_cutoff3)
@@ -542,8 +563,8 @@ class ApproachPyRTD(Approach):
                     #N3 = ( N0 , N0 + 1), a3+ = a2+
                     for a3m in statesdm[charge]:
                         #charge4 = charge + 0, a4 = a3m
-                        t2D = t1 * Tba[r1, a2m, a3m].conj() * Tba[r0, a3m, a1p].conj()
-                        t2X = t1 * Tba[r0, a2m, a3m].conj() * Tba[r1, a3m, a1p].conj()
+                        t2D = t1 * Tba[r1, a3m, a2m].conj() * Tba[r0, a1p, a3m].conj()
+                        t2X = t1 * Tba[r0, a3m, a2m].conj() * Tba[r1, a1p, a3m].conj()
                         E3 = E[a1p] - E[a3m]
                         if abs(t2D) > t_cutoff3:
                             tempD = t2D * integralD(-1, 1, E1, E2, E3, T1, T2, mu1, mu2, D, b_and_R, abs(t2D.imag)>t_cutoff3)
@@ -556,14 +577,14 @@ class ApproachPyRTD(Approach):
                 #N2 = (N0, N0), a2- = a0
                 for a2p in statesdm[charge]:
                     E2 = E[a2p] - E[a0]
-                    t1 = t * Tba[r1, a2p, a1p].conj()
+                    t1 = t * Tba[r1, a1p, a2p].conj()
                     if abs(t1) < t_cutoff2:
                         continue
                     #p2 = 1
                     #N3 = ( N0, N0 +1), a3- = a0
                     for a3p in statesdm[charge+1]:
                         #charge4 = charge, a4 = a0
-                        t2D = t1 * Tba[r1, a2p, a3p] * Tba[r0, a0, a3p].conj()
+                        t2D = t1 * Tba[r1, a3p, a2p] * Tba[r0, a3p, a0].conj()
                         E3 = E[a3p] - E[a0]
                         if abs(t2D) > t_cutoff3:
                             tempD = t2D * integralD(1, -1, E1, E2, E3, T1, T2, mu1, mu2, D, b_and_R, abs(t2D.imag)>t_cutoff3)
@@ -571,7 +592,7 @@ class ApproachPyRTD(Approach):
                     #N3 = (N0, N0-1), a3- = a0
                     for a3p in statesdm[charge-1]:
                         #charge4 = charge, a4 = a0
-                        t2X = t1 * Tba[r0, a3p, a2p].conj() * Tba[r1, a3p, a0]
+                        t2X = t1 * Tba[r0, a2p, a3p].conj() * Tba[r1, a0, a3p]
                         E3 = E[a3p] - E[a0]
                         if abs(t2X) > t_cutoff3:
                             tempX = -t2X * integralX(1, -1, E1, E2, E3, T1, T2, mu1, mu2, D, b_and_R, abs(t2X.imag)>t_cutoff3)
@@ -580,7 +601,7 @@ class ApproachPyRTD(Approach):
                     #N3 = ( N0-1, N0 ), a3+ = a2+
                     for a3m in statesdm[charge-1]:
                         #charge4 = charge - 1, a4 = a3m
-                        t2D = t1 * Tba[r1, a3m, a0] * Tba[r0, a3m, a2p].conj()
+                        t2D = t1 * Tba[r1, a0, a3m] * Tba[r0, a2p, a3m].conj()
                         E3 = E[a2p] - E[a3m]
                         if abs(t2D) > t_cutoff3:
                             tempD = t2D * integralD(1, -1, E1, E2, E3, T1, T2, mu1, mu2, D, b_and_R, abs(t2D.imag)>t_cutoff3)
@@ -588,7 +609,7 @@ class ApproachPyRTD(Approach):
                     #N3 = (N0 + 1, N0)
                     for a3m in statesdm[charge+1]:
                         #charge4 = charge + 1, a4 = a3m
-                        t2X = t1 * Tba[r0, a0, a3m].conj() * Tba[r1, a2p, a3m]
+                        t2X = t1 * Tba[r0, a3m, a0].conj() * Tba[r1, a3m, a2p]
                         E3 = E[a2p] - E[a3m]
                         if abs(t2X) > t_cutoff3:
                             tempX = -t2X * integralX(1, -1, E1, E2, E3, T1, T2, mu1, mu2, D, b_and_R, abs(t2X.imag)>t_cutoff3)
@@ -597,12 +618,12 @@ class ApproachPyRTD(Approach):
                 #N2 = ( N0 + 1  , N0 + 1), a2+ = a1+
                 for a2m in statesdm[charge+1]:
                     E2 = E[a1p] - E[a2m]
-                    t1 = t * Tba[r1, a0, a2m].conj()
+                    t1 = t * Tba[r1, a2m, a0].conj()
                     #p2 = 1
                     # N3 = (N0 + 1, N0 + 2), a3- = a2-
                     for a3p in statesdm[charge+2]:
                         #charge4 = charge + 1, a4 = a2m
-                        t2D = t1 * Tba[r1, a1p, a3p] * Tba[r0, a2m,  a3p].conj()
+                        t2D = t1 * Tba[r1, a3p, a1p] * Tba[r0, a3p, a2m].conj()
                         E3 = E[a3p] - E[a2m]
                         if abs(t2D) > t_cutoff3:
                             tempD = t2D * integralD(-1, -1, E1, E2, E3, T1, T2, mu1, mu2, D, b_and_R, abs(t2D.imag)>t_cutoff3)
@@ -610,7 +631,7 @@ class ApproachPyRTD(Approach):
                     #N3 = ( N0 + 1, N0 )
                     for a3p in statesdm[charge]:
                         #charge4 = charge + 1, a4 = a2m
-                        t2X = t1 * Tba[r0, a3p, a1p].conj() * Tba[r1, a3p, a2m]
+                        t2X = t1 * Tba[r0, a1p, a3p].conj() * Tba[r1, a2m, a3p]
                         E3 = E[a3p] - E[a2m]
                         if abs(t2X) > t_cutoff3:
                             tempX = -t2X * integralX(-1, -1, E1, E2, E3, T1, T2, mu1, mu2, D, b_and_R, abs(t2X.imag)>t_cutoff3)
@@ -619,7 +640,7 @@ class ApproachPyRTD(Approach):
                     #N3 = ( N0, N0+1), a3+ = a2+
                     for a3m in statesdm[charge]:
                         #charge4 = charge, a4 = a3m
-                        t2D = t1 * Tba[r1, a3m, a2m] * Tba[r0, a3m, a1p].conj()
+                        t2D = t1 * Tba[r1, a2m, a3m] * Tba[r0, a1p, a3m].conj()
                         E3 = E[a1p] - E[a3m]
                         if abs(t2D) > t_cutoff3:
                             tempD = t2D * integralD(-1, -1, E1, E2, E3, T1, T2, mu1, mu2, D, b_and_R, abs(t2D.imag)>t_cutoff3)
@@ -627,7 +648,7 @@ class ApproachPyRTD(Approach):
                     #N3 = ( N0 + 2, N0 + 1 ), a3+ = a2+
                     for a3m in statesdm[charge+2]:
                         #charge4 = charge + 2, a4 = a3m
-                        t2X = t1 * Tba[r0, a2m, a3m].conj() * Tba[r1, a1p, a3m]
+                        t2X = t1 * Tba[r0, a3m, a2m].conj() * Tba[r1, a3m, a1p]
                         E3 = E[a1p] - E[a3m]
                         if abs(t2X) > t_cutoff3:
                             tempX = -t2X * integralX(-1, -1, E1, E2, E3, T1, T2, mu1, mu2, D, b_and_R, abs(t2X.imag)>t_cutoff3)
@@ -671,7 +692,7 @@ class ApproachPyRTD(Approach):
                 E1 = E[a2] - E[a1]
                 E2 = E[a2] - E[b1]
                 for l in range(nleads):
-                    t2 = Tba[l, a1, a2] * Tba[l, b1, a2].conj()
+                    t2 = Tba[l, a2, a1] * Tba[l, a2, b1].conj()
                     f = fermi_func((E1 - mulst[l]) / tlst[l]) + fermi_func((E2 - mulst[l]) / tlst[l])
                     phi0 = delta_phi((E1 - mulst[l]) / tlst[l], (E2 - mulst[l]) / tlst[l],
                                      dlst[l, 0] / tlst[l], dlst[l, 1] / tlst[l])
@@ -686,7 +707,7 @@ class ApproachPyRTD(Approach):
                 E1 = E[b1] - E[a2]
                 E2 = E[a1] - E[a2]
                 for l in range(nleads):
-                    t2 = Tba[l, a2, b1] * Tba[l, a2, a1].conj()
+                    t2 = Tba[l, b1, a2] * Tba[l, a1, a2].conj()
                     f = fermi_func(-(E1 - mulst[l]) / tlst[l]) + fermi_func(-(E2 - mulst[l]) / tlst[l])
                     phi0 = delta_phi((E1 - mulst[l]) / tlst[l], (E2 - mulst[l]) / tlst[l],
                                      dlst[l, 0] / tlst[l], dlst[l, 1] / tlst[l], sign=-1)
@@ -702,7 +723,7 @@ class ApproachPyRTD(Approach):
                     if b1 == a2:  # vertices on upper prop -> state on lower prop cannot change
                         E1 = E[c] - E[a2]
                         for l in range(nleads):
-                            t2 = Tba[l, a1, c] * Tba[l, a2, c].conj()
+                            t2 = Tba[l, c, a1] * Tba[l, c, a2].conj()
                             f = fermi_func((E1 - mulst[l]) / tlst[l])
                             phi0 = phi((E1 - mulst[l]) / tlst[l], dlst[l, 0] / tlst[l],
                                        dlst[l, 1] / tlst[l], sign=1)
@@ -713,7 +734,7 @@ class ApproachPyRTD(Approach):
                     if a1 == a2:  # vertices on lower prop -> state on upper prop cannot change
                         E1 = E[c] - E[a2]
                         for l in range(si.nleads):
-                            t2 = Tba[l, a2, c] * Tba[l, b1, c].conj()
+                            t2 = Tba[l, c, a2] * Tba[l, c, b1].conj()
                             f = fermi_func((E1 - mulst[l]) / tlst[l])
                             phi0 = phi((E1 - mulst[l]) / tlst[l], dlst[l, 0] / tlst[l],
                                        dlst[l, 1] / tlst[l], sign=1)
@@ -727,7 +748,7 @@ class ApproachPyRTD(Approach):
                     if b1 == a2:  # vertices on upper prop -> state on lower prop cannot change
                         E1 = E[a2] - E[c]
                         for l in range(nleads):
-                            t2 = Tba[l, c, a2] * Tba[l, c, a1].conj()
+                            t2 = Tba[l, a2, c] * Tba[l, a1, c].conj()
                             f = fermi_func(-(E1 - mulst[l]) / tlst[l])
                             phi0 = phi((E1 - mulst[l]) / tlst[l], dlst[l, 0] / tlst[l],
                                        dlst[l, 1] / tlst[l], sign=-1)
@@ -738,7 +759,7 @@ class ApproachPyRTD(Approach):
                     if a1 == a2:  # vertices on lower prop -> state on upper prop cannot change
                         E1 = E[a2] - E[c]
                         for l in range(nleads):
-                            t2 = Tba[l, c, b1] * Tba[l, c, a2].conj()
+                            t2 = Tba[l, b1, c] * Tba[l, a2, c].conj()
                             f = fermi_func(-(E1 - mulst[l]) / tlst[l])
                             phi0 = phi((E1 - mulst[l]) / tlst[l], dlst[l, 0] / tlst[l],
                                        dlst[l, 1] / tlst[l], sign=-1)
@@ -785,7 +806,7 @@ class ApproachPyRTD(Approach):
                         continue
                     E1 = E[b2] - E[a1]
                     for l in range(nleads):
-                        t2 = Tba[l, a1, a2] * Tba[l, a1, b2].conj()
+                        t2 = Tba[l, a2, a1] * Tba[l, b2, a1].conj()
                         f = fermi_func((E1 - mulst[l]) / tlst[l]) + fermi_func((E2 - mulst[l]) / tlst[l])
                         phi0 = delta_phi((E1 - mulst[l]) / tlst[l], (E2 - mulst[l]) / tlst[l],
                                          dlst[l, 0] / tlst[l], dlst[l, 1] / tlst[l])
@@ -802,7 +823,7 @@ class ApproachPyRTD(Approach):
                         continue
                     E2 = E[a1] - E[b2]
                     for l in range(si.nleads):
-                        t2 = Tba[l, b2, a1] * Tba[l, a2, a1].conj()
+                        t2 = Tba[l, a1, b2] * Tba[l, a1, a2].conj()
                         f = fermi_func(-(E1 - mulst[l]) / tlst[l]) + fermi_func(-(E2 - mulst[l]) / tlst[l])
                         phi0 = delta_phi((E1 - mulst[l]) / tlst[l], (E2 - mulst[l]) / tlst[l],
                                          dlst[l, 0] / tlst[l], dlst[l, 1] / tlst[l], sign=-1)
@@ -821,7 +842,7 @@ class ApproachPyRTD(Approach):
                         if a1 == b2:
                             E1 = E[c] - E[b2]
                             for l in range(nleads):
-                                t2 = Tba[l, a1, c] * Tba[l, a2, c].conj()
+                                t2 = Tba[l, c, a1] * Tba[l, c, a2].conj()
                                 f = fermi_func((E1 - mulst[l]) / tlst[l])
                                 phi0 = phi((E1 - mulst[l]) / tlst[l], dlst[l, 0] / tlst[l], dlst[l, 1] / tlst[l])
                                 temp1 = - PI * t2.real * f - t2.imag * phi0
@@ -831,7 +852,7 @@ class ApproachPyRTD(Approach):
                         if a1 == a2:
                             E1 = E[c] - E[a2]
                             for l in range(nleads):
-                                t2 = Tba[l, b2, c] * Tba[l, a1, c].conj()
+                                t2 = Tba[l, c, b2] * Tba[l, c, a1].conj()
                                 f = fermi_func((E1 - mulst[l]) / tlst[l])
                                 phi0 = phi((E1 - mulst[l]) / tlst[l], dlst[l, 0] / tlst[l], dlst[l, 1] / tlst[l])
                                 temp1 = - PI * t2.real * f + t2.imag * phi0
@@ -844,7 +865,7 @@ class ApproachPyRTD(Approach):
                         if a1 == b2:
                             E1 = E[b2] - E[c]
                             for l in range(nleads):
-                                t2 = Tba[l, c, a2] * Tba[l, c, a1].conj()
+                                t2 = Tba[l, a2, c] * Tba[l, a1, c].conj()
                                 f = fermi_func(-(E1 - mulst[l]) / tlst[l])
                                 phi0 = phi((E1 - mulst[l])/tlst[l], dlst[l, 0] / tlst[l], dlst[l, 1] / tlst[l], sign=-1)
                                 temp1 = - PI * t2.real * f + t2.imag * phi0
@@ -854,7 +875,7 @@ class ApproachPyRTD(Approach):
                         if a1 == a2:
                             E1 = E[a2] - E[c]
                             for l in range(nleads):
-                                t2 = Tba[l, c, a1] * Tba[l, c, b2].conj()
+                                t2 = Tba[l, a1, c] * Tba[l, b2, c].conj()
                                 f = fermi_func(-(E1 - mulst[l]) / tlst[l])
                                 phi0 = phi((E1 - mulst[l])/tlst[l], dlst[l, 0] / tlst[l], dlst[l, 1] / tlst[l], sign=-1)
                                 temp1 = - PI * t2.real * f - t2.imag * phi0
